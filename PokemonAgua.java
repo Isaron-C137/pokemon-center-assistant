@@ -1,13 +1,13 @@
 package com.pokemoncenter.model;
- 
+
 /**
  * Representa un Pokémon de tipo Agua.
  * Extiende Pokemon y agrega atributos y movimientos propios del tipo Agua.
  */
 public class PokemonAgua extends Pokemon {
- 
+
     private int defensa;
- 
+
     /**
      * Constructor de PokemonAgua.
      *
@@ -20,21 +20,21 @@ public class PokemonAgua extends Pokemon {
         super(nombre, nivel, hp, "Agua");
         this.defensa = defensa;
     }
- 
+
     /**
      * Usa el movimiento Surf — inflige daño a todos los oponentes.
      */
     public void surfear() {
         System.out.println(getNombre() + " usó Surf! Una ola gigante arrasa con todo.");
     }
- 
+
     /**
      * Usa el movimiento Hidrobomba — ataque de agua de alto poder.
      */
     public void hidrobomba() {
         System.out.println(getNombre() + " usó Hidrobomba! Un chorro de agua a alta presión.");
     }
- 
+
     /**
      * Curación tipo Agua — restaura HP adicional gracias a la alta defensa.
      */
@@ -43,7 +43,7 @@ public class PokemonAgua extends Pokemon {
         super.curar();
         System.out.println(getNombre() + " recuperó energía adicional gracias a su alta defensa.");
     }
- 
+
     /**
      * Calcula el daño considerando la estadística de defensa del tipo Agua.
      *
@@ -53,7 +53,7 @@ public class PokemonAgua extends Pokemon {
     protected int calcularDano() {
         return getNivel() * 5 + (defensa / 2);
     }
- 
+
     public int getDefensa() { return defensa; }
     public void setDefensa(int defensa) { this.defensa = defensa; }
 }

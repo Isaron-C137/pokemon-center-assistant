@@ -1,11 +1,16 @@
 package com.pokemoncenter.model;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Date;
 
 /**
  * Representa un registro en el historial de consultas realizadas
  * por un usuario al asistente de IA del Centro Pokémon.
- * Cada objeto corresponde a una fila en la tabla SQL de historial.
+ * Conecta directamente con la base de datos SQL para la persistencia.
  */
 public class HistorialBusqueda {
 
@@ -17,11 +22,6 @@ public class HistorialBusqueda {
 
     /**
      * Constructor de HistorialBusqueda.
-     *
-     * @param id          Identificador único del registro
-     * @param usuario     Usuario que realizó la consulta
-     * @param consulta    Texto de la consulta enviada a la IA
-     * @param respuestaIA Respuesta recibida de la IA
      */
     public HistorialBusqueda(int id, Usuario usuario, String consulta, String respuestaIA) {
         this.id = id;
@@ -32,28 +32,89 @@ public class HistorialBusqueda {
     }
 
     /**
-     * Guarda este registro en la base de datos SQL.
-     * La lógica de conexión se implementa en la capa de persistencia (DAO).
+     * Guarda este registro en la base de datos SQL (CREATE).
      */
     public void guardar() {
-        System.out.println("Guardando consulta en historial: \"" + consulta + "\"");
+        String sql = "INSERT INTO historial_busqueda (usuario_id, consulta, respuesta_ia, fecha) VALUES (?, ?, ?, ?)";
+        
+        try (Connection con = ConexionDB.getConexion();
+             PreparedStatement ps = con.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+            
+            ps.setInt(1, this.usuario.getId());
+            ps.setString(2, this.consulta);
+            ps.setString(3, this.respuestaIA);
+            ps.setTimestamp(4, new Timestamp(this.fecha.getTime()));
+            
+            int filasAfectadas = ps.executeUpdate();
+            
+            if (filasAfectadas > 0) {
+                try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        this.id = generatedKeys.getInt(1);
+                        System.out.println("Consulta guardada en SQL exitosamente con ID: " + this.id);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al guardar en el historial SQL: " + e.getMessage());
+        }
     }
 
     /**
-     * Elimina este registro del historial en la base de datos.
+     * Elimina este registro del historial en la base de datos (DELETE).
      */
     public void eliminar() {
-        System.out.println("Registro #" + id + " eliminado del historial.");
+        String sql = "DELETE FROM historial_busqueda WHERE id = ?";
+        
+        try (Connection con = ConexionDB.getConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, this.id);
+            int filasAfectadas = ps.executeUpdate();
+            
+            if (filasAfectadas > 0) {
+                System.out.println("Registro #" + this.id + " eliminado del historial SQL.");
+            } else {
+                System.out.println("No se encontró el registro #" + this.id + " para eliminar.");
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al eliminar del historial SQL: " + e.getMessage());
+        }
     }
 
     /**
-     * Obtiene todos los registros del historial de un usuario.
-     * La lógica real se implementa en la capa DAO con una consulta SQL.
-     *
-     * @param usuario el usuario del que se desea obtener el historial
+     * Obtiene y muestra todos los registros del historial de un usuario (READ).
      */
     public void obtenerPorUsuario(Usuario usuario) {
-        System.out.println("Obteniendo historial de consultas del usuario: " + usuario.getUsername());
+        String sql = "SELECT id, consulta, respuesta_ia, fecha FROM historial_busqueda WHERE usuario_id = ? ORDER BY fecha DESC";
+        
+        System.out.println("=== Historial de consultas de: " + usuario.getUsername() + " ===");
+        
+        try (Connection con = ConexionDB.getConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, usuario.getId());
+            try (ResultSet rs = ps.executeQuery()) {
+                boolean tieneRegistros = false;
+                while (rs.next()) {
+                    tieneRegistros = true;
+                    int regId = rs.getInt("id");
+                    String q = rs.getString("consulta");
+                    String r = rs.getString("respuesta_ia");
+                    Timestamp f = rs.getTimestamp("fecha");
+                    
+                    System.out.println("[" + f + "] ID #" + regId);
+                    System.out.println("Pregunta: " + q);
+                    System.out.println("Respuesta: " + r);
+                    System.out.println("----------------------------------------");
+                }
+                if (!tieneRegistros) {
+                    System.out.println("No hay consultas registradas para este usuario.");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al obtener el historial de SQL: " + e.getMessage());
+        }
     }
 
     // ── Getters y Setters ──
@@ -75,6 +136,6 @@ public class HistorialBusqueda {
 
     @Override
     public String toString() {
-        return "[" + fecha + "] " + usuario.getUsername() + " preguntó: " + consulta;
+        return "[" + fecha + "] Usuario ID: " + usuario.getId() + " preguntó: " + consulta;
     }
 }
