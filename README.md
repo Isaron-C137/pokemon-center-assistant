@@ -139,7 +139,7 @@ Task tracking, sprint planning, and backlog management were carried out using a 
 ## Authors
 
 - [Isaac David Reyes Aviles]
-- [Freddy Samuel Guadamuz]
+- [Freddy Samuel Guadamuz Achío]
 
 ## Course
 
